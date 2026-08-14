@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Training Diio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h2>Sales Training</h2>
+        <p>Diio</p>
+      </div>
+      <nav>
+        <a href="index.html" class="nav-link active">📊 Nine-Box Grid</a>
+        <a href="evaluacion.html" class="nav-link">📝 Nueva Evaluación</a>
+        <a href="vendedores.html" class="nav-link">👥 Vendedores</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Nine-Box Grid</h1>
+          <p>Skills Consultivos × Conocimiento Técnico</p>
+        </div>
+        <span class="periodo-badge" id="periodoBadge">Q3 2026</span>
+      </div>
+
+      <div class="content-split">
+        <!-- Nine Box -->
+        <div class="nine-box-panel">
+          <div class="nine-box-wrapper">
+            <div class="eje-y-label">← Eje Consultivo →</div>
+            <div class="nine-box-container">
+              <div class="eje-x-labels">
+                <span>Bajo Técnico</span>
+                <span>Medio Técnico</span>
+                <span>Alto Técnico</span>
+              </div>
+              <div class="grid-with-labels">
+                <div class="eje-y-labels">
+                  <span>Alto</span>
+                  <span>Medio</span>
+                  <span>Bajo</span>
+                </div>
+                <div class="nine-box-grid" id="nineBoxGrid">
+                  <div class="loading">Cargando</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Leyenda -->
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:#64748b">Umbrales:</span>
+            <span style="font-size:11px;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-weight:600">Alto ≥75</span>
+            <span style="font-size:11px;background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:10px;font-weight:600">Medio 50–74</span>
+            <span style="font-size:11px;background:#fee2e2;color:#7f1d1d;padding:2px 8px;border-radius:10px;font-weight:600">Bajo &lt;50</span>
+          </div>
+        </div>
+
+        <!-- Ficha -->
+        <div class="ficha-panel" id="fichaPanel">
+          <div class="ficha-empty">
+            <div class="icon">👤</div>
+            <p>Selecciona un vendedor del grid<br>para ver su ficha</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
