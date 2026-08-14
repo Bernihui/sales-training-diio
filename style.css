@@ -450,4 +450,4 @@ canvas#aranaChart { max-width: 100%; }
 /* Loading */
 .loading { text-align: center; padding: 40px; color: #94a3b8; }
 .loading::after { content: ''; animation: dots 1s infinite; }
-@keyframes dots { 0%{content:'.'} 33%{content:'..'}
+@keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
