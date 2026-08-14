@@ -107,4 +107,4 @@ let state = {
 
 async function cargarDatos() {
   const [vendedores, evaluaciones, pilares] = await Promise.all([
-    supabase('vendedores?select=
+supabase('vendedores?select=*,pais:paises(nombre),area:areas(nombre),lider:lideres(nombre)&activo=eq.true&order=nombre'),
