@@ -262,3 +262,11 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init)
+async function supabasePatch(path, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: 'PATCH',
+    headers: { ...headers, 'Prefer': 'return=representation' },
+    body: JSON.stringify(body)
+  })
+  return res.json()
+}
