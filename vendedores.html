@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendedores — Sales Training Diio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h2>Sales Training</h2>
+        <p>Diio</p>
+      </div>
+      <nav>
+        <a href="index.html" class="nav-link">📊 Nine-Box Grid</a>
+        <a href="evaluacion.html" class="nav-link">📝 Nueva Evaluación</a>
+        <a href="vendedores.html" class="nav-link active">👥 Vendedores</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Gestión de Vendedores</h1>
+          <p>Edita los datos y fotos de cada consultor</p>
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalNuevo()">+ Nuevo Vendedor</button>
+      </div>
+
+      <div id="listaVendedores" class="loading">Cargando</div>
+    </main>
+  </div>
+
+  <!-- Modal editar/crear vendedor -->
+  <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;padding:28px;width:560px;max-height:90vh;overflow-y:auto">
+      <h2 style="font-size:16px;font-weight:700;color:#1a2e4a;margin-bottom:20px" id="modalTitle">Editar Vendedor</h2>
+      
+      <div style="display:flex;gap:20px;margin-bottom:20px">
+        <!-- Foto -->
+        <div style="text-align:center">
+          <div id="fotoPreview" style="width:80px;height:80px;border-radius:14px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:white;margin-bottom:8px"></div>
+          <input type="file" id="fotoInput" accept="image/*" style="display:none" onchange="previewFoto(this)">
+          <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="document.getElementById('fotoInput').click()">📷 Foto</button>
+        </div>
+
+        <div style="flex:1">
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="v_nombre" placeholder="Ej: María Trinidad Martínez">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="v_email" placeholder="email@empresa.com">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Rol</label>
+          <select id="v_rol">
+            <option value="">Seleccionar...</option>
+            <option>Account Executive</option>
+            <option>Senior Account Executive</option>
+            <option>Sales Consultant</option>
+            <option>Senior Sales Manager</option>
+            <option>Outbound SDR</option>
+            <option>Head of Sales</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nivel / Seniority</label>
+          <select id="v_nivel">
+            <option value="">Seleccionar...</option>
+            <option>Junior</option>
+            <option>Semi Senior</option>
+            <option>Senior</option>
+            <option>Principal</option>
+            <option>Lead</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>País</label>
+          <select id="v_pais">
+            <option value="">Seleccionar...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha de ingreso</label>
+          <input type="date" id="v_fecha_ingreso">
+        </div>
+        <div class="form-group">
+          <label>Meta anual (USD)</label>
+          <input type="number" id="v_meta" placeholder="Ej: 350000">
+        </div>
+        <div class="form-group">
+          <label>Segmentación de clientes</label>
+          <input type="text" id="v_segmentacion" placeholder="Ej: Enterprise, SMB">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarVendedor()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let vendedorEditando = null
+    let fotoBase64 = null
+
+    async function initVendedores() {
+      await cargarDatos()
+      renderLista()
+      await cargarPaises()
+    }
+
+    async function cargarPaises() {
+      const paises = await supabaseGet('paises?select=*&order=nombre')
+      const sel = document.getElementById('v_pais')
+      paises.forEach(p => {
+        const opt = document.createElement('option')
+        opt.value = p.id
+        opt.textContent = p.nombre
+        sel.appendChild(opt)
+      })
+    }
+
+    function renderLista() {
+      const lista = document.getElementById('listaVendedores')
+      lista.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+          ${state.vendedores.map(v => {
+            const ev = getUltimaEval(v.id)
+            const cfg = ev?.cuadrante ? CUADRANTES[ev.cuadrante] : null
+            return `
+              <div class="card" style="display:flex;gap:14px;align-items:flex-start;cursor:pointer" onclick="abrirModalEditar('${v.id}')">
+                <div style="width:52px;height:52px;border-radius:12px;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white">
+                  ${v.foto_url ? `<img src="${v.foto_url}" style="width:100%;height:100%;object-fit:cover">` : initials(v.nombre)}
+                </div>
+                <div style="flex:1;min-width:0">
+                  <p style="font-weight:700;font-size:14px;color:#1a2e4a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.nombre}</p>
+                  <p style="font-size:12px;color:#64748b;margin-top:2px">${v.rol || '—'} ${v.nivel_org ? '· ' + v.nivel_org : ''}</p>
+                  <p style="font-size:11px;color:#94a3b8;margin-top:2px">📍 ${v.pais?.nombre || '—'}</p>
+                  ${cfg ? `<span class="tag" style="background:${cfg.colorBg};color:${cfg.colorText};margin-top:6px;display:inline-block">${cfg.emoji} ${ev.cuadrante}</span>` : '<span style="font-size:11px;color:#94a3b8;margin-top:4px;display:block">Sin evaluación</span>'}
+                </div>
+                <button style="background:none;border:none;color:#94a3b8;font-size:16px;cursor:pointer;padding:4px">✏️</button>
+              </div>
+            `
+          }).join('')}
+        </div>
+      `
+    }
+
+    function abrirModalNuevo() {
+      vendedorEditando = null
+      fotoBase64 = null
+      document.getElementById('modalTitle').textContent = 'Nuevo Vendedor'
+      document.getElementById('v_nombre').value = ''
+      document.getElementById('v_email').value = ''
+      document.getElementById('v_rol').value = ''
+      document.getElementById('v_nivel').value = ''
+      document.getElementById('v_pais').value = ''
+      document.getElementById('v_fecha_ingreso').value = ''
+      document.getElementById('v_meta').value = ''
+      document.getElementById('v_segmentacion').value = ''
+      document.getElementById('fotoPreview').innerHTML = '👤'
+      document.getElementById('modal').style.display = 'flex'
+    }
+
+    function abrirModalEditar(id) {
+      vendedorEditando = state.vendedores.find(v => v.id === id)
+      if (!vendedorEditando) return
+      const v = vendedorEditando
+      document.getElementById('modalTitle').textContent = 'Editar Vendedor'
+      document.getElementById('v_nombre').value = v.nombre || ''
+      document.getElementById('v_email').value = v.email || ''
+      document.getElementById('v_rol').value = v.rol || ''
+      document.getElementById('v_nivel').value = v.nivel_org || ''
+      document.getElementById('v_pais').value = v.pais_id || ''
+      document.getElementById('v_fecha_ingreso').value = v.fecha_ingreso || ''
+      document.getElementById('v_meta').value = ''
+      document.getElementById('v_segmentacion').value = v.segmentacion_clientes || ''
+      document.getElementById('fotoPreview').innerHTML = v.foto_url
+        ? `<img src="${v.foto_url}" style="width:80px;height:80px;object-fit:cover;border-radius:14px">`
+        : `<span style="font-size:24px;font-weight:700">${initials(v.nombre)}</span>`
+      document.getElementById('modal').style.display = 'flex'
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none'
+    }
+
+    function previewFoto(input) {
+      const file = input.files[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = e => {
+        fotoBase64 = e.target.result
+        document.getElementById('fotoPreview').innerHTML =
+          `<img src="${fotoBase64}" style="width:80px;height:80px;object-fit:cover;border-radius:14px">`
+      }
+      reader.readAsDataURL(file)
+    }
+
+    async function guardarVendedor() {
+      const body = {
+        nombre: document.getElementById('v_nombre').value,
+        email: document.getElementById('v_email').value,
+        rol: document.getElementById('v_rol').value,
+        nivel_org: document.getElementById('v_nivel').value,
+        pais_id: document.getElementById('v_pais').value || null,
+        fecha_ingreso: document.getElementById('v_fecha_ingreso').value || null,
+        segmentacion_clientes: document.getElementById('v_segmentacion').value,
+      }
+      if (fotoBase64) body.foto_url = fotoBase64
+
+      if (vendedorEditando) {
+        await supabasePatch(`vendedores?id=eq.${vendedorEditando.id}`, body)
+      } else {
+        body.activo = true
+        await supabasePost('vendedores', body)
+      }
+
+      cerrarModal()
+      await cargarDatos()
+      renderLista()
+    }
+
+    document.addEventListener('DOMContentLoaded', initVendedores)
+  </script>
+</body>
+</html>
