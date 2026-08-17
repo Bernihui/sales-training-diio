@@ -138,7 +138,11 @@ async function renderFicha() {
   panel.innerHTML = `
     <div class="ficha-header">
       <div class="ficha-header-top">
-        <div class="ficha-avatar-big">${initials(v.nombre)}</div>
+        <div class="ficha-avatar-big" style="overflow:hidden;padding:0">
+  ${v.foto_url 
+    ? `<img src="${v.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:14px">`
+    : initials(v.nombre)}
+</div>
         <div class="ficha-info">
           <h2>${v.nombre}</h2>
           <p>${v.rol || ''} ${v.nivel_org ? '· ' + v.nivel_org : ''}</p>
