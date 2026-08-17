@@ -97,11 +97,12 @@
           <input type="text" id="v_segmentacion" placeholder="Ej: Enterprise, SMB">
         </div>
       </div>
-<div class="form-actions">
-  <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
-  <button class="btn" style="background:#fee2e2;color:#dc2626;margin-right:auto" onclick="eliminarVendedor()" id="btnEliminar">🗑 Eliminar</button>
-  <button class="btn btn-primary" onclick="guardarVendedor()">Guardar</button>
-</div>
+
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn" id="btnEliminar" style="background:#fee2e2;color:#dc2626;margin-right:auto;display:none" onclick="eliminarVendedor()">🗑 Eliminar</button>
+        <button class="btn btn-primary" onclick="guardarVendedor()">Guardar</button>
+      </div>
     </div>
   </div>
 
@@ -121,8 +122,8 @@
 
     async function initVendedores() {
       await cargarDatos()
-      renderLista()
       await cargarPaises()
+      renderLista()
     }
 
     async function cargarPaises() {
@@ -177,6 +178,7 @@
       document.getElementById('v_meta').value = ''
       document.getElementById('v_segmentacion').value = ''
       document.getElementById('fotoPreview').innerHTML = '👤'
+      document.getElementById('btnEliminar').style.display = 'none'
       document.getElementById('modal').style.display = 'flex'
     }
 
@@ -196,6 +198,7 @@
       document.getElementById('fotoPreview').innerHTML = v.foto_url
         ? `<img src="${v.foto_url}" style="width:80px;height:80px;object-fit:cover;border-radius:14px">`
         : `<span style="font-size:24px;font-weight:700">${initials(v.nombre)}</span>`
+      document.getElementById('btnEliminar').style.display = 'inline-flex'
       document.getElementById('modal').style.display = 'flex'
     }
 
@@ -234,6 +237,18 @@
         await supabasePost('vendedores', body)
       }
 
+      cerrarModal()
+      await cargarDatos()
+      renderLista()
+    }
+
+    async function eliminarVendedor() {
+      if (!vendedorEditando) return
+      if (!confirm(`¿Eliminar a ${vendedorEditando.nombre}? Esta acción no se puede deshacer.`)) return
+      await fetch(`${SUPABASE_URL}/rest/v1/vendedores?id=eq.${vendedorEditando.id}`, {
+        method: 'DELETE',
+        headers: headers
+      })
       cerrarModal()
       await cargarDatos()
       renderLista()
