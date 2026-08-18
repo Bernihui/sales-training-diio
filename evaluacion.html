@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nueva Evaluación — Sales Training Diio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h2>Sales Training</h2>
+        <p>Diio</p>
+      </div>
+      <nav>
+        <a href="index.html" class="nav-link">📊 Nine-Box Grid</a>
+        <a href="evaluacion.html" class="nav-link active">📝 Nueva Evaluación</a>
+        <a href="vendedores.html" class="nav-link">👥 Vendedores</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Nueva Evaluación</h1>
+          <p>Ingresa los datos del periodo para ubicar al consultor en la matriz</p>
+        </div>
+      </div>
+
+      <div style="max-width:800px">
+
+        <!-- Paso 1: Vendedor y Periodo -->
+        <div class="card" style="margin-bottom:16px">
+          <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:16px">📋 Datos generales</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Vendedor</label>
+              <select id="e_vendedor" onchange="onVendedorChange()">
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fecha de evaluación</label>
+              <input type="date" id="e_fecha">
+            </div>
+            <div class="form-group">
+              <label>Periodo</label>
+              <select id="e_periodo">
+                <option value="Q1">Q1</option>
+                <option value="Q2">Q2</option>
+                <option value="Q3" selected>Q3</option>
+                <option value="Q4">Q4</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Año</label>
+              <input type="number" id="e_anio" value="2026">
+            </div>
+            <div class="form-group">
+              <label>Meta anual (USD)</label>
+              <input type="number" id="e_meta" placeholder="Ej: 350000">
+            </div>
+            <div class="form-group">
+              <label>Performance YTD (%)</label>
+              <input type="number" id="e_ytd" placeholder="Ej: 87" step="0.1">
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 2: Evaluación Técnica -->
+        <div class="card" style="margin-bottom:16px">
+          <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:4px">⚙️ Evaluación Técnica</h3>
+          <p style="font-size:12px;color:#64748b;margin-bottom:16px">Nota obtenida en la evaluación técnica de producto</p>
+          <div class="range-group">
+            <input type="range" min="0" max="100" value="0" id="e_tecnica" oninput="updateTecnica()">
+            <span class="range-val" id="e_tecnica_val">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:4px">
+            <span>0 — Bajo (&lt;50)</span>
+            <span>Medio (50–74)</span>
+            <span>100 — Alto (≥75)</span>
+          </div>
+          <div id="eje_tecnico_preview" style="margin-top:12px;display:none">
+            <span style="font-size:12px;color:#64748b">Eje técnico: </span>
+            <span id="eje_tecnico_label" style="font-size:14px;font-weight:700"></span>
+          </div>
+        </div>
+
+        <!-- Paso 3: Evaluación Consultiva Diio -->
+        <div class="card" style="margin-bottom:16px">
+          <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:4px">🎯 Evaluación Consultiva — Diio</h3>
+          <p style="font-size:12px;color:#64748b;margin-bottom:16px">Ingresa las notas de las reuniones de Discovery del periodo</p>
+
+          <!-- Reuniones Discovery -->
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div>
+                <p style="font-size:13px;font-weight:700;color:#1a2e4a">🔍 Discovery</p>
+                <p style="font-size:11px;color:#64748b">Basado en playbook de Discovery</p>
+              </div>
+              <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="agregarReunion('discovery')">+ Agregar reunión</button>
+            </div>
+            <div id="reuniones_discovery"></div>
+            <div id="promedio_discovery" style="display:none;margin-top:8px;padding:8px 12px;background:white;border-radius:8px;border:1px solid #e2e8f0">
+              <span style="font-size:12px;color:#64748b">Promedio Discovery: </span>
+              <span id="promedio_discovery_val" style="font-size:16px;font-weight:700;color:#1a2e4a"></span>
+              <span style="font-size:12px;color:#64748b">/10</span>
+              <span id="eje_consultivo_preview" style="margin-left:12px;font-size:12px;font-weight:700"></span>
+            </div>
+          </div>
+
+          <!-- Preview cuadrante -->
+          <div id="cuadrante_preview" style="display:none;padding:12px 16px;border-radius:10px;margin-top:8px">
+            <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Cuadrante resultante</p>
+            <p id="cuadrante_nombre" style="font-size:18px;font-weight:700"></p>
+          </div>
+        </div>
+
+        <!-- Paso 4: Narrativa -->
+        <div class="card" style="margin-bottom:16px">
+          <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:16px">💬 Narrativa de desarrollo</h3>
+          <div class="form-group">
+            <label>Fortalezas observadas (basado en Diio)</label>
+            <textarea id="e_fortalezas" rows="3" class="form-group input" placeholder="• Manejo del flujo y encuadre&#10;• Cuantificación del dolor&#10;• Cierre efectivo"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Oportunidades de mejora</label>
+            <textarea id="e_oportunidades" rows="3" class="form-group input" placeholder="• Identificación del Compelling Event&#10;• Regla de las tres capas&#10;• Talk-time"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Comentario del líder</label>
+            <textarea id="e_comentario" rows="4" class="form-group input" placeholder="Observaciones generales sobre el periodo evaluado..."></textarea>
+          </div>
+        </div>
+
+        <!-- Plan de trabajo sugerido -->
+        <div id="plan_sugerido" class="card" style="margin-bottom:16px;display:none">
+          <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:12px">🗺️ Plan de trabajo sugerido</h3>
+          <div id="plan_contenido"></div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="window.location='index.html'">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarEvaluacion()">Guardar Evaluación</button>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const PLANES = {
+      'Vendedor Élite': {
+        acciones: [
+          'Asignar cuentas estratégicas y deals de alta complejidad',
+          'Rol de mentor interno — acompañar a vendedores en Zona de Riesgo o En Construcción',
+          'Foco en expansión de ticket y mapeo de stakeholders senior',
+          'Revisar métricas de talk-time para mantener bajo el 40%'
+        ],
+        meta: 'Mantener promedio Diio ≥ 8.0 y explorar oportunidades de liderazgo'
+      },
+      'Consultor Avanzado': {
+        acciones: [
+          'Profundizar micro-matemática — construir el número con el cliente, no proponérselo',
+          'Trabajar compelling event en deals sin urgencia natural — bajar a hitos concretos',
+          'Revisar talk-time — objetivo bajar a menos del 40% en Discovery',
+          'Practicar cierre en vivo con stakeholders adicionales comprometidos'
+        ],
+        meta: 'Subir promedio Diio Discovery de actual a ≥ 8.0 y aprobar evaluación técnica nivel Senior'
+      },
+      'Relacionador': {
+        acciones: [
+          'Capacitación intensiva en conocimiento de producto y casos de uso',
+          'Practicar bloqueo de feature talk con respaldo técnico',
+          'Acompañamiento en demos con foco en traducción a valor de negocio',
+          'Estudiar 3 casos de éxito del producto por semana'
+        ],
+        meta: 'Subir nota técnica a ≥ 75 en próximo trimestre manteniendo el eje consultivo'
+      },
+      'Técnico Comercial': {
+        acciones: [
+          'Coaching semanal en regla de las 3 capas — profundizar con seguimientos',
+          'Practicar preguntas abiertas — eliminar preguntas cerradas en cadena',
+          'Reducir talk-time en Discovery — el cliente debe hablar más del 60%',
+          'Role play de Discovery con feedback inmediato en Diio'
+        ],
+        meta: 'Subir promedio Diio Discovery a ≥ 6.5 en próximo trimestre'
+      },
+      'Perfil Balanceado': {
+        acciones: [
+          'Identificar fortaleza dominante y potenciarla como diferenciador',
+          'Profundizar cuantificación — construir número con cliente en cada Discovery',
+          'Trabajar encuadre y apertura con research previo visible',
+          'Definir especialización por industria o tipo de cliente'
+        ],
+        meta: 'Definir eje de crecimiento prioritario y subir 1 nivel en ese eje el próximo trimestre'
+      },
+      'En Construcción': {
+        acciones: [
+          'Estructura completa del Discovery — respetar los 5 momentos sin saltarse ninguno',
+          'Capacitación en producto — nivel básico obligatorio antes de próxima evaluación',
+          'Role plays semanales de Discovery con grabación y feedback en Diio',
+          'Acompañamiento en al menos 2 llamadas por semana con líder o mentor'
+        ],
+        meta: 'Completar capacitación técnica y subir promedio Diio Discovery a ≥ 5.0'
+      },
+      'Técnico Puro': {
+        acciones: [
+          'Escucha activa y manejo del silencio — no llenar los silencios con contenido',
+          'Eliminar feature talk en Discovery — cada mención de producto debe ir seguida de una pregunta abierta',
+          'Prohibir preguntas cerradas en cadena — mínimo 2 seguimientos por tema',
+          'Revisar grabaciones de Diio semanalmente con foco en talk-time y tipo de preguntas'
+        ],
+        meta: 'Subir promedio Diio Discovery a ≥ 5.5 y bajar talk-time a menos del 50%'
+      },
+      'Especialista Base': {
+        acciones: [
+          'Plan de desarrollo con foco en Discovery — trabajar apertura y encuadre',
+          'Capacitación en producto nivel intermedio',
+          'Acompañamiento directo en llamadas con feedback post-reunión',
+          'Revisar grabaciones de Diio con checklist del playbook'
+        ],
+        meta: 'Subir eje consultivo a Medio en próximo trimestre con promedio Diio ≥ 5.0'
+      },
+      'Zona de Riesgo': {
+        acciones: [
+          'Plan 90 días con métricas semanales de seguimiento',
+          'Role plays diarios de Discovery — mínimo 3 por semana',
+          'Escucha de grabaciones en Diio con feedback inmediato del líder',
+          'Reunión semanal de seguimiento con líder — revisión de KPIs y bloqueos',
+          'Capacitación técnica y consultiva en paralelo — priorizar Discovery'
+        ],
+        meta: 'Salir de Zona de Riesgo en 90 días — objetivo Especialista Base o En Construcción'
+      }
+    }
+
+    let reunionesDiscovery = []
+
+    function agregarReunion(tipo) {
+      const id = Date.now()
+      reunionesDiscovery.push({ id, nota: 0, fecha: '', cliente: '' })
+      renderReuniones()
+    }
+
+    function eliminarReunion(id) {
+      reunionesDiscovery = reunionesDiscovery.filter(r => r.id !== id)
+      renderReuniones()
+    }
+
+    function renderReuniones() {
+      const cont = document.getElementById('reuniones_discovery')
+      cont.innerHTML = reunionesDiscovery.map((r, i) => `
+        <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:center;margin-bottom:8px">
+          <input type="text" placeholder="Cliente / reunión" value="${r.cliente}"
+            oninput="reunionesDiscovery[${i}].cliente=this.value"
+            style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">
+          <input type="date" value="${r.fecha}"
+            oninput="reunionesDiscovery[${i}].fecha=this.value"
+            style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" min="1" max="10" step="0.5" value="${r.nota}"
+              oninput="reunionesDiscovery[${i}].nota=parseFloat(this.value);document.getElementById('nota_${r.id}').textContent=this.value;calcularPromedios()"
+              style="width:80px;accent-color:#3b82f6">
+            <span id="nota_${r.id}" style="font-size:13px;font-weight:700;color:#1a2e4a;min-width:24px">${r.nota}</span>
+            <span style="font-size:11px;color:#94a3b8">/10</span>
+          </div>
+          <button onclick="eliminarReunion(${r.id})"
+            style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:4px">✕</button>
+        </div>
+      `).join('')
+      calcularPromedios()
+    }
+
+    function calcularPromedios() {
+      if (reunionesDiscovery.length === 0) {
+        document.getElementById('promedio_discovery').style.display = 'none'
+        document.getElementById('cuadrante_preview').style.display = 'none'
+        document.getElementById('plan_sugerido').style.display = 'none'
+        return
+      }
+
+      const notasValidas = reunionesDiscovery.filter(r => r.nota > 0)
+      if (notasValidas.length === 0) return
+
+      const promedio = notasValidas.reduce((a, r) => a + r.nota, 0) / notasValidas.length
+      const puntaje = promedio * 10 // convertir a escala 0-100
+
+      document.getElementById('promedio_discovery').style.display = 'block'
+      document.getElementById('promedio_discovery_val').textContent = promedio.toFixed(1)
+
+      const ejeC = calcularEje(puntaje)
+      const ejeLabel = document.getElementById('eje_consultivo_preview')
+      ejeLabel.textContent = `→ Eje Consultivo: ${ejeC}`
+      ejeLabel.style.color = ejeColor(ejeC)
+
+      // Calcular cuadrante
+      const notaTecnica = parseInt(document.getElementById('e_tecnica').value)
+      const ejeT = calcularEje(notaTecnica)
+      const cuadrante = calcularCuadrante(ejeC, ejeT)
+      const cfg = CUADRANTES[cuadrante]
+
+      const preview = document.getElementById('cuadrante_preview')
+      preview.style.display = 'block'
+      preview.style.background = cfg.colorBg
+      preview.style.border = `2px solid ${cfg.colorText}20`
+      document.getElementById('cuadrante_nombre').textContent = `${cfg.emoji} ${cuadrante}`
+      document.getElementById('cuadrante_nombre').style.color = cfg.colorText
+
+      // Plan sugerido
+      const plan = PLANES[cuadrante]
+      if (plan) {
+        document.getElementById('plan_sugerido').style.display = 'block'
+        document.getElementById('plan_contenido').innerHTML = `
+          <div style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:12px">
+            <p style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:8px">ACCIONES PRIORITARIAS</p>
+            <ul style="padding-left:16px">
+              ${plan.acciones.map(a => `<li style="font-size:13px;color:#475569;margin-bottom:6px;line-height:1.5">${a}</li>`).join('')}
+            </ul>
+          </div>
+          <div style="background:#eff6ff;border-radius:8px;padding:12px;border:1px solid #bfdbfe">
+            <p style="font-size:12px;font-weight:600;color:#1e3a8a;margin-bottom:4px">META DEL PRÓXIMO TRIMESTRE</p>
+            <p style="font-size:13px;color:#1e40af">${plan.meta}</p>
+          </div>
+        `
+      }
+    }
+
+    function updateTecnica() {
+      const val = document.getElementById('e_tecnica').value
+      document.getElementById('e_tecnica_val').textContent = val
+      const eje = calcularEje(parseInt(val))
+      document.getElementById('eje_tecnico_preview').style.display = 'block'
+      const label = document.getElementById('eje_tecnico_label')
+      label.textContent = eje
+      label.style.color = ejeColor(eje)
+      calcularPromedios()
+    }
+
+    async function onVendedorChange() {
+      // En el futuro: cargar evaluaciones previas del vendedor
+    }
+
+    async function initEvaluacion() {
+      await cargarDatos()
+      const sel = document.getElementById('e_vendedor')
+      state.vendedores.forEach(v => {
+        const opt = document.createElement('option')
+        opt.value = v.id
+        opt.textContent = v.nombre
+        sel.appendChild(opt)
+      })
+      document.getElementById('e_fecha').value = new Date().toISOString().split('T')[0]
+    }
+
+    async function guardarEvaluacion() {
+      const vendedor_id = document.getElementById('e_vendedor').value
+      if (!vendedor_id) return alert('Selecciona un vendedor')
+      if (reunionesDiscovery.length === 0) return alert('Agrega al menos una reunión de Discovery')
+
+      const notasValidas = reunionesDiscovery.filter(r => r.nota > 0)
+      const promedio = notasValidas.reduce((a, r) => a + r.nota, 0) / notasValidas.length
+      const puntaje_consultivo = promedio * 10
+      const nota_tecnica_raw = parseInt(document.getElementById('e_tecnica').value)
+      const eje_consultivo = calcularEje(puntaje_consultivo)
+      const eje_tecnico = calcularEje(nota_tecnica_raw)
+      const cuadrante = calcularCuadrante(eje_consultivo, eje_tecnico)
+
+      const fortalezasText = document.getElementById('e_fortalezas').value
+      const oportunidadesText = document.getElementById('e_oportunidades').value
+
+      const body = {
+        vendedor_id,
+        periodo: document.getElementById('e_periodo').value,
+        anio: parseInt(document.getElementById('e_anio').value),
+        fecha_evaluacion: document.getElementById('e_fecha').value,
+        nota_tecnica_raw,
+        eje_tecnico,
+        puntaje_consultivo,
+        eje_consultivo,
+        cuadrante,
+        performance_ytd: parseFloat(document.getElementById('e_ytd').value) || null,
+        meta_anual_usd: parseFloat(document.getElementById('e_meta').value) || null,
+        fortalezas: fortalezasText ? fortalezasText.split('\n').filter(l => l.trim()) : [],
+        oportunidades_mejora: oportunidadesText ? oportunidadesText.split('\n').filter(l => l.trim()) : [],
+        comentario_lider: document.getElementById('e_comentario').value,
+      }
+
+      const res = await supabasePost('evaluaciones', body)
+
+      if (res?.id) {
+        // Guardar reuniones como items consultivos
+        const pilarDiscovery = state.pilares.find(p => p.orden === 5) // Descubrimiento estratégico
+        if (pilarDiscovery) {
+          await supabasePost('items_consultivos', reunionesDiscovery.map(r => ({
+            evaluacion_id: res.id,
+            pilar_id: pilarDiscovery.id,
+            puntaje: r.nota * 10,
+            observacion: r.cliente,
+            fuente: 'diio'
+          })))
+        }
+        alert('✅ Evaluación guardada correctamente')
+        window.location.href = 'index.html'
+      } else {
+        alert('❌ Error al guardar. Revisa la consola.')
+        console.error(res)
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initEvaluacion)
+  </script>
+</body>
+</html>
