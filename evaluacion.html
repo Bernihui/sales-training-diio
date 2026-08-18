@@ -30,7 +30,7 @@
 
       <div style="max-width:800px">
 
-        <!-- Paso 1: Vendedor y Periodo -->
+        <!-- Paso 1: Datos generales -->
         <div class="card" style="margin-bottom:16px">
           <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:16px">📋 Datos generales</h3>
           <div class="form-grid">
@@ -59,13 +59,14 @@
             </div>
             <div class="form-group">
               <label>Meta anual (USD)</label>
-              <input type="number" id="e_meta" placeholder="Ej: 350000">
+              <input type="number" id="e_meta" placeholder="Ej: 350000" oninput="calcularYTD()">
             </div>
             <div class="form-group">
-              <label>Performance YTD (%)</label>
-              <input type="number" id="e_ytd" placeholder="Ej: 87" step="0.1">
+              <label>Ventas YTD (USD)</label>
+              <input type="number" id="e_ventas_ytd" placeholder="Ej: 280000" oninput="calcularYTD()">
             </div>
           </div>
+          <div id="e_ytd_preview" style="display:none;font-size:20px;font-weight:700;padding:8px 16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-top:4px"></div>
         </div>
 
         <!-- Paso 2: Evaluación Técnica -->
@@ -87,30 +88,30 @@
           </div>
         </div>
 
-        <!-- Paso 3: Evaluación Consultiva Diio -->
+        <!-- Paso 3: Evaluación Consultiva -->
         <div class="card" style="margin-bottom:16px">
           <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:4px">🎯 Evaluación Consultiva — Diio</h3>
           <p style="font-size:12px;color:#64748b;margin-bottom:16px">Ingresa las notas de las reuniones de Discovery del periodo</p>
 
-          <!-- Reuniones Discovery -->
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:12px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div>
                 <p style="font-size:13px;font-weight:700;color:#1a2e4a">🔍 Discovery</p>
                 <p style="font-size:11px;color:#64748b">Basado en playbook de Discovery</p>
               </div>
-              <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="agregarReunion('discovery')">+ Agregar reunión</button>
+              <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="agregarReunion()">+ Agregar reunión</button>
             </div>
             <div id="reuniones_discovery"></div>
             <div id="promedio_discovery" style="display:none;margin-top:8px;padding:8px 12px;background:white;border-radius:8px;border:1px solid #e2e8f0">
               <span style="font-size:12px;color:#64748b">Promedio Discovery: </span>
               <span id="promedio_discovery_val" style="font-size:16px;font-weight:700;color:#1a2e4a"></span>
-              <span style="font-size:12px;color:#64748b">/10</span>
+              <span style="font-size:12px;color:#64748b">/10 · </span>
+              <span style="font-size:12px;color:#64748b">Reuniones: </span>
+              <span id="total_reuniones" style="font-size:14px;font-weight:700;color:#1a2e4a"></span>
               <span id="eje_consultivo_preview" style="margin-left:12px;font-size:12px;font-weight:700"></span>
             </div>
           </div>
 
-          <!-- Preview cuadrante -->
           <div id="cuadrante_preview" style="display:none;padding:12px 16px;border-radius:10px;margin-top:8px">
             <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Cuadrante resultante</p>
             <p id="cuadrante_nombre" style="font-size:18px;font-weight:700"></p>
@@ -122,19 +123,19 @@
           <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:16px">💬 Narrativa de desarrollo</h3>
           <div class="form-group">
             <label>Fortalezas observadas (basado en Diio)</label>
-            <textarea id="e_fortalezas" rows="3" class="form-group input" placeholder="• Manejo del flujo y encuadre&#10;• Cuantificación del dolor&#10;• Cierre efectivo"></textarea>
+            <textarea id="e_fortalezas" rows="3" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;resize:none" placeholder="• Manejo del flujo y encuadre&#10;• Cuantificación del dolor&#10;• Cierre efectivo"></textarea>
           </div>
           <div class="form-group">
             <label>Oportunidades de mejora</label>
-            <textarea id="e_oportunidades" rows="3" class="form-group input" placeholder="• Identificación del Compelling Event&#10;• Regla de las tres capas&#10;• Talk-time"></textarea>
+            <textarea id="e_oportunidades" rows="3" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;resize:none" placeholder="• Identificación del Compelling Event&#10;• Regla de las tres capas&#10;• Talk-time"></textarea>
           </div>
           <div class="form-group">
             <label>Comentario del líder</label>
-            <textarea id="e_comentario" rows="4" class="form-group input" placeholder="Observaciones generales sobre el periodo evaluado..."></textarea>
+            <textarea id="e_comentario" rows="4" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;resize:none" placeholder="Observaciones generales sobre el periodo evaluado..."></textarea>
           </div>
         </div>
 
-        <!-- Plan de trabajo sugerido -->
+        <!-- Plan sugerido -->
         <div id="plan_sugerido" class="card" style="margin-bottom:16px;display:none">
           <h3 style="font-size:14px;font-weight:700;color:#1a2e4a;margin-bottom:12px">🗺️ Plan de trabajo sugerido</h3>
           <div id="plan_contenido"></div>
@@ -169,7 +170,7 @@
           'Revisar talk-time — objetivo bajar a menos del 40% en Discovery',
           'Practicar cierre en vivo con stakeholders adicionales comprometidos'
         ],
-        meta: 'Subir promedio Diio Discovery de actual a ≥ 8.0 y aprobar evaluación técnica nivel Senior'
+        meta: 'Subir promedio Diio Discovery a ≥ 8.0 y aprobar evaluación técnica nivel Senior'
       },
       'Relacionador': {
         acciones: [
@@ -239,9 +240,23 @@
 
     let reunionesDiscovery = []
 
-    function agregarReunion(tipo) {
+    function calcularYTD() {
+      const meta = parseFloat(document.getElementById('e_meta').value)
+      const ventas = parseFloat(document.getElementById('e_ventas_ytd').value)
+      const preview = document.getElementById('e_ytd_preview')
+      if (meta > 0 && ventas >= 0) {
+        const pct = (ventas / meta * 100).toFixed(1)
+        preview.style.display = 'block'
+        preview.textContent = `Performance YTD: ${pct}%`
+        preview.style.color = pct >= 100 ? '#059669' : pct >= 70 ? '#d97706' : '#dc2626'
+      } else {
+        preview.style.display = 'none'
+      }
+    }
+
+    function agregarReunion() {
       const id = Date.now()
-      reunionesDiscovery.push({ id, nota: 0, fecha: '', cliente: '' })
+      reunionesDiscovery.push({ id, nota: 5, fecha: '', cliente: '' })
       renderReuniones()
     }
 
@@ -253,18 +268,18 @@
     function renderReuniones() {
       const cont = document.getElementById('reuniones_discovery')
       cont.innerHTML = reunionesDiscovery.map((r, i) => `
-        <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:center;margin-bottom:8px">
+        <div style="display:grid;grid-template-columns:1fr 140px auto auto;gap:8px;align-items:center;margin-bottom:8px">
           <input type="text" placeholder="Cliente / reunión" value="${r.cliente}"
             oninput="reunionesDiscovery[${i}].cliente=this.value"
-            style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">
+            style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:100%">
           <input type="date" value="${r.fecha}"
             oninput="reunionesDiscovery[${i}].fecha=this.value"
-            style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">
+            style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;width:100%">
           <div style="display:flex;align-items:center;gap:6px">
             <input type="range" min="1" max="10" step="0.5" value="${r.nota}"
-              oninput="reunionesDiscovery[${i}].nota=parseFloat(this.value);document.getElementById('nota_${r.id}').textContent=this.value;calcularPromedios()"
+              oninput="reunionesDiscovery[${i}].nota=parseFloat(this.value);document.getElementById('nota_val_${r.id}').textContent=this.value;calcularPromedios()"
               style="width:80px;accent-color:#3b82f6">
-            <span id="nota_${r.id}" style="font-size:13px;font-weight:700;color:#1a2e4a;min-width:24px">${r.nota}</span>
+            <span id="nota_val_${r.id}" style="font-size:13px;font-weight:700;color:#1a2e4a;min-width:24px">${r.nota}</span>
             <span style="font-size:11px;color:#94a3b8">/10</span>
           </div>
           <button onclick="eliminarReunion(${r.id})"
@@ -286,17 +301,17 @@
       if (notasValidas.length === 0) return
 
       const promedio = notasValidas.reduce((a, r) => a + r.nota, 0) / notasValidas.length
-      const puntaje = promedio * 10 // convertir a escala 0-100
+      const puntaje = promedio * 10
 
       document.getElementById('promedio_discovery').style.display = 'block'
       document.getElementById('promedio_discovery_val').textContent = promedio.toFixed(1)
+      document.getElementById('total_reuniones').textContent = reunionesDiscovery.length
 
       const ejeC = calcularEje(puntaje)
       const ejeLabel = document.getElementById('eje_consultivo_preview')
       ejeLabel.textContent = `→ Eje Consultivo: ${ejeC}`
       ejeLabel.style.color = ejeColor(ejeC)
 
-      // Calcular cuadrante
       const notaTecnica = parseInt(document.getElementById('e_tecnica').value)
       const ejeT = calcularEje(notaTecnica)
       const cuadrante = calcularCuadrante(ejeC, ejeT)
@@ -305,11 +320,10 @@
       const preview = document.getElementById('cuadrante_preview')
       preview.style.display = 'block'
       preview.style.background = cfg.colorBg
-      preview.style.border = `2px solid ${cfg.colorText}20`
+      preview.style.border = `2px solid ${cfg.colorText}30`
       document.getElementById('cuadrante_nombre').textContent = `${cfg.emoji} ${cuadrante}`
       document.getElementById('cuadrante_nombre').style.color = cfg.colorText
 
-      // Plan sugerido
       const plan = PLANES[cuadrante]
       if (plan) {
         document.getElementById('plan_sugerido').style.display = 'block'
@@ -339,9 +353,7 @@
       calcularPromedios()
     }
 
-    async function onVendedorChange() {
-      // En el futuro: cargar evaluaciones previas del vendedor
-    }
+    async function onVendedorChange() {}
 
     async function initEvaluacion() {
       await cargarDatos()
@@ -368,8 +380,9 @@
       const eje_tecnico = calcularEje(nota_tecnica_raw)
       const cuadrante = calcularCuadrante(eje_consultivo, eje_tecnico)
 
-      const fortalezasText = document.getElementById('e_fortalezas').value
-      const oportunidadesText = document.getElementById('e_oportunidades').value
+      const meta = parseFloat(document.getElementById('e_meta').value)
+      const ventas = parseFloat(document.getElementById('e_ventas_ytd').value)
+      const performance_ytd = meta > 0 ? parseFloat((ventas/meta*100).toFixed(1)) : null
 
       const body = {
         vendedor_id,
@@ -381,26 +394,27 @@
         puntaje_consultivo,
         eje_consultivo,
         cuadrante,
-        performance_ytd: parseFloat(document.getElementById('e_ytd').value) || null,
-        meta_anual_usd: parseFloat(document.getElementById('e_meta').value) || null,
-        fortalezas: fortalezasText ? fortalezasText.split('\n').filter(l => l.trim()) : [],
-        oportunidades_mejora: oportunidadesText ? oportunidadesText.split('\n').filter(l => l.trim()) : [],
+        performance_ytd,
+        meta_anual_usd: meta || null,
+        fortalezas: document.getElementById('e_fortalezas').value.split('\n').filter(l => l.trim()),
+        oportunidades_mejora: document.getElementById('e_oportunidades').value.split('\n').filter(l => l.trim()),
         comentario_lider: document.getElementById('e_comentario').value,
       }
 
       const res = await supabasePost('evaluaciones', body)
 
       if (res?.id) {
-        // Guardar reuniones como items consultivos
-        const pilarDiscovery = state.pilares.find(p => p.orden === 5) // Descubrimiento estratégico
+        const pilarDiscovery = state.pilares.find(p => p.orden === 5)
         if (pilarDiscovery) {
-          await supabasePost('items_consultivos', reunionesDiscovery.map(r => ({
-            evaluacion_id: res.id,
-            pilar_id: pilarDiscovery.id,
-            puntaje: r.nota * 10,
-            observacion: r.cliente,
-            fuente: 'diio'
-          })))
+          for (const r of reunionesDiscovery) {
+            await supabasePost('items_consultivos', {
+              evaluacion_id: res.id,
+              pilar_id: pilarDiscovery.id,
+              puntaje: r.nota * 10,
+              observacion: r.cliente,
+              fuente: 'diio'
+            })
+          }
         }
         alert('✅ Evaluación guardada correctamente')
         window.location.href = 'index.html'
