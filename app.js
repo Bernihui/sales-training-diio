@@ -264,7 +264,99 @@ async function init() {
   await cargarDatos()
   renderNineBox()
 }
+function drawEvolucion(historial) {
+  const canvas = document.getElementById('evolucionChart')
+  if (!canvas || historial.length < 2) return
+  const ctx = canvas.getContext('2d')
+  const w = canvas.width, h = canvas.height
+  const pad = { top: 20, right: 20, bottom: 40, left: 40 }
+  const chartW = w - pad.left - pad.right
+  const chartH = h - pad.top - pad.bottom
 
+  ctx.clearRect(0, 0, w, h)
+
+  const n = historial.length
+  const xStep = chartW / (n - 1)
+
+  // Grid lines
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (chartH / 4) * i
+    ctx.beginPath()
+    ctx.moveTo(pad.left, y)
+    ctx.lineTo(pad.left + chartW, y)
+    ctx.strokeStyle = '#e2e8f0'
+    ctx.lineWidth = 1
+    ctx.stroke()
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = '10px sans-serif'
+    ctx.textAlign = 'right'
+    ctx.fillText(100 - i * 25, pad.left - 6, y + 3)
+  }
+
+  // X labels
+  historial.forEach((h, i) => {
+    const x = pad.left + i * xStep
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = '9px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(h.periodo_label || h.periodo, x, pad.top + chartH + 20)
+  })
+
+  // Línea consultivo
+  ctx.beginPath()
+  historial.forEach((h, i) => {
+    const x = pad.left + i * xStep
+    const y = pad.top + chartH - (h.puntaje_consultivo / 100) * chartH
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+  })
+  ctx.strokeStyle = '#3b82f6'
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+
+  // Puntos consultivo
+  historial.forEach((h, i) => {
+    const x = pad.left + i * xStep
+    const y = pad.top + chartH - (h.puntaje_consultivo / 100) * chartH
+    ctx.beginPath()
+    ctx.arc(x, y, 5, 0, Math.PI * 2)
+    ctx.fillStyle = '#3b82f6'
+    ctx.fill()
+  })
+
+  // Línea técnico
+  ctx.beginPath()
+  historial.forEach((h, i) => {
+    const x = pad.left + i * xStep
+    const y = pad.top + chartH - (h.nota_tecnica_raw / 100) * chartH
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+  })
+  ctx.strokeStyle = '#f59e0b'
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+
+  // Puntos técnico
+  historial.forEach((h, i) => {
+    const x = pad.left + i * xStep
+    const y = pad.top + chartH - (h.nota_tecnica_raw / 100) * chartH
+    ctx.beginPath()
+    ctx.arc(x, y, 5, 0, Math.PI * 2)
+    ctx.fillStyle = '#f59e0b'
+    ctx.fill()
+  })
+
+  // Leyenda
+  ctx.fillStyle = '#3b82f6'
+  ctx.fillRect(pad.left, pad.top + chartH + 28, 12, 3)
+  ctx.fillStyle = '#64748b'
+  ctx.font = '10px sans-serif'
+  ctx.textAlign = 'left'
+  ctx.fillText('Consultivo', pad.left + 16, pad.top + chartH + 31)
+
+  ctx.fillStyle = '#f59e0b'
+  ctx.fillRect(pad.left + 90, pad.top + chartH + 28, 12, 3)
+  ctx.fillStyle = '#64748b'
+  ctx.fillText('Técnico', pad.left + 106, pad.top + chartH + 31)
+}
 document.addEventListener('DOMContentLoaded', init)
 async function supabasePatch(path, body) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
