@@ -13,12 +13,12 @@
         <h2>Sales Training</h2>
         <p>Diio</p>
       </div>
-<nav>
-  <a href="index.html" class="nav-link active">📊 Nine-Box Grid</a>
-  <a href="evaluacion.html" class="nav-link">📝 Nueva Evaluación</a>
-  <a href="vendedores.html" class="nav-link">👥 Vendedores</a>
-  <a href="historial.html" class="nav-link">📁 Historial</a>
-</nav>
+      <nav>
+        <a href="index.html" class="nav-link">📊 Nine-Box Grid</a>
+        <a href="evaluacion.html" class="nav-link active">📝 Nueva Evaluación</a>
+        <a href="vendedores.html" class="nav-link">👥 Vendedores</a>
+        <a href="historial.html" class="nav-link">📁 Historial</a>
+      </nav>
     </aside>
 
     <main class="main">
@@ -44,6 +44,15 @@
             <div class="form-group">
               <label>Fecha de evaluación</label>
               <input type="date" id="e_fecha">
+            </div>
+            <div class="form-group">
+              <label>Tipo de periodo</label>
+              <select id="e_tipo_periodo" onchange="actualizarPeriodos()">
+                <option value="mensual">Mensual</option>
+                <option value="trimestral" selected>Trimestral</option>
+                <option value="semestral">Semestral</option>
+                <option value="anual">Anual</option>
+              </select>
             </div>
             <div class="form-group">
               <label>Periodo</label>
@@ -106,8 +115,7 @@
             <div id="promedio_discovery" style="display:none;margin-top:8px;padding:8px 12px;background:white;border-radius:8px;border:1px solid #e2e8f0">
               <span style="font-size:12px;color:#64748b">Promedio Discovery: </span>
               <span id="promedio_discovery_val" style="font-size:16px;font-weight:700;color:#1a2e4a"></span>
-              <span style="font-size:12px;color:#64748b">/10 · </span>
-              <span style="font-size:12px;color:#64748b">Reuniones: </span>
+              <span style="font-size:12px;color:#64748b">/10 · Reuniones: </span>
               <span id="total_reuniones" style="font-size:14px;font-weight:700;color:#1a2e4a"></span>
               <span id="eje_consultivo_preview" style="margin-left:12px;font-size:12px;font-weight:700"></span>
             </div>
@@ -241,6 +249,24 @@
 
     let reunionesDiscovery = []
 
+    function actualizarPeriodos() {
+      const tipo = document.getElementById('e_tipo_periodo').value
+      const sel = document.getElementById('e_periodo')
+      sel.innerHTML = ''
+      const opciones = {
+        mensual: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+        trimestral: ['Q1','Q2','Q3','Q4'],
+        semestral: ['S1','S2'],
+        anual: ['Anual']
+      }
+      opciones[tipo].forEach(p => {
+        const opt = document.createElement('option')
+        opt.value = p
+        opt.textContent = p
+        sel.appendChild(opt)
+      })
+    }
+
     function calcularYTD() {
       const meta = parseFloat(document.getElementById('e_meta').value)
       const ventas = parseFloat(document.getElementById('e_ventas_ytd').value)
@@ -297,34 +323,27 @@
         document.getElementById('plan_sugerido').style.display = 'none'
         return
       }
-
       const notasValidas = reunionesDiscovery.filter(r => r.nota > 0)
       if (notasValidas.length === 0) return
-
       const promedio = notasValidas.reduce((a, r) => a + r.nota, 0) / notasValidas.length
       const puntaje = promedio * 10
-
       document.getElementById('promedio_discovery').style.display = 'block'
       document.getElementById('promedio_discovery_val').textContent = promedio.toFixed(1)
       document.getElementById('total_reuniones').textContent = reunionesDiscovery.length
-
       const ejeC = calcularEje(puntaje)
       const ejeLabel = document.getElementById('eje_consultivo_preview')
       ejeLabel.textContent = `→ Eje Consultivo: ${ejeC}`
       ejeLabel.style.color = ejeColor(ejeC)
-
       const notaTecnica = parseInt(document.getElementById('e_tecnica').value)
       const ejeT = calcularEje(notaTecnica)
       const cuadrante = calcularCuadrante(ejeC, ejeT)
       const cfg = CUADRANTES[cuadrante]
-
       const preview = document.getElementById('cuadrante_preview')
       preview.style.display = 'block'
       preview.style.background = cfg.colorBg
       preview.style.border = `2px solid ${cfg.colorText}30`
       document.getElementById('cuadrante_nombre').textContent = `${cfg.emoji} ${cuadrante}`
       document.getElementById('cuadrante_nombre').style.color = cfg.colorText
-
       const plan = PLANES[cuadrante]
       if (plan) {
         document.getElementById('plan_sugerido').style.display = 'block'
@@ -336,7 +355,7 @@
             </ul>
           </div>
           <div style="background:#eff6ff;border-radius:8px;padding:12px;border:1px solid #bfdbfe">
-            <p style="font-size:12px;font-weight:600;color:#1e3a8a;margin-bottom:4px">META DEL PRÓXIMO TRIMESTRE</p>
+            <p style="font-size:12px;font-weight:600;color:#1e3a8a;margin-bottom:4px">META DEL PRÓXIMO PERIODO</p>
             <p style="font-size:13px;color:#1e40af">${plan.meta}</p>
           </div>
         `
@@ -372,7 +391,6 @@
       const vendedor_id = document.getElementById('e_vendedor').value
       if (!vendedor_id) return alert('Selecciona un vendedor')
       if (reunionesDiscovery.length === 0) return alert('Agrega al menos una reunión de Discovery')
-
       const notasValidas = reunionesDiscovery.filter(r => r.nota > 0)
       const promedio = notasValidas.reduce((a, r) => a + r.nota, 0) / notasValidas.length
       const puntaje_consultivo = promedio * 10
@@ -380,14 +398,15 @@
       const eje_consultivo = calcularEje(puntaje_consultivo)
       const eje_tecnico = calcularEje(nota_tecnica_raw)
       const cuadrante = calcularCuadrante(eje_consultivo, eje_tecnico)
-
       const meta = parseFloat(document.getElementById('e_meta').value)
       const ventas = parseFloat(document.getElementById('e_ventas_ytd').value)
       const performance_ytd = meta > 0 ? parseFloat((ventas/meta*100).toFixed(1)) : null
+      const periodo = document.getElementById('e_periodo').value
+      const tipo_periodo = document.getElementById('e_tipo_periodo').value
 
       const body = {
         vendedor_id,
-        periodo: document.getElementById('e_periodo').value,
+        periodo: ['Q1','Q2','Q3','Q4'].includes(periodo) ? periodo : 'Q3',
         anio: parseInt(document.getElementById('e_anio').value),
         fecha_evaluacion: document.getElementById('e_fecha').value,
         nota_tecnica_raw,
@@ -397,13 +416,14 @@
         cuadrante,
         performance_ytd,
         meta_anual_usd: meta || null,
+        tipo_periodo,
+        periodo_label: periodo,
         fortalezas: document.getElementById('e_fortalezas').value.split('\n').filter(l => l.trim()),
         oportunidades_mejora: document.getElementById('e_oportunidades').value.split('\n').filter(l => l.trim()),
         comentario_lider: document.getElementById('e_comentario').value,
       }
 
       const res = await supabasePost('evaluaciones', body)
-
       if (res?.id) {
         const pilarDiscovery = state.pilares.find(p => p.orden === 5)
         if (pilarDiscovery) {
@@ -429,4 +449,3 @@
   </script>
 </body>
 </html>
-
