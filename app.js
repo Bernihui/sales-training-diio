@@ -58,6 +58,15 @@ async function supabasePost(path, body) {
   return res.json()
 }
 
+async function supabasePatch(path, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method: 'PATCH',
+    headers: { ...headers, 'Prefer': 'return=representation' },
+    body: JSON.stringify(body)
+  })
+  return res.json()
+}
+
 let state = { vendedores: [], evaluaciones: [], pilares: [], selectedVendedor: null }
 
 function getUltimaEval(id) { return state.evaluaciones.find(e => e.vendedor_id === id) || null }
@@ -72,6 +81,7 @@ async function cargarDatos() {
   state.evaluaciones = Array.isArray(e) ? e : []
   state.pilares = Array.isArray(p) ? p : []
 }
+
 function renderNineBox() {
   const grid = document.getElementById('nineBoxGrid')
   if (!grid) return
@@ -98,10 +108,12 @@ function renderNineBox() {
         <div class="cell-avatars">
           ${vends.map(v => `
             <div class="avatar ${state.selectedVendedor?.id === v.id ? 'selected' : ''}"
-              style="background:${avatarColor(v.nombre)}"
+              style="background:${avatarColor(v.nombre)};overflow:hidden;padding:0"
               onclick="selectVendedor('${v.id}')"
               title="${v.nombre}">
-              ${initials(v.nombre)}
+              ${v.foto_url
+                ? `<img src="${v.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+                : initials(v.nombre)}
             </div>`).join('')}
           ${vends.length === 0 ? '<span class="empty-cell">Sin evaluaciones</span>' : ''}
         </div>
@@ -124,12 +136,19 @@ async function renderFicha() {
     panel.innerHTML = `<div class="ficha-empty"><div class="icon">👤</div><p>Selecciona un vendedor</p></div>`
     return
   }
+
   const ev = getUltimaEval(v.id)
   let items = []
   if (ev) {
     items = await supabaseGet(`items_consultivos?select=*,pilar:pilares_consultivos(*)&evaluacion_id=eq.${ev.id}`)
     items = Array.isArray(items) ? items.sort((a,b) => a.pilar.orden - b.pilar.orden) : []
   }
+
+  // Cargar historial completo del vendedor
+  let historial = state.evaluaciones
+    .filter(e => e.vendedor_id === v.id)
+    .sort((a, b) => a.anio - b.anio || a.periodo.localeCompare(b.periodo))
+
   const ejeC = ev?.eje_consultivo || '—'
   const ejeT = ev?.eje_tecnico || '—'
   const cuadrante = ev?.cuadrante || 'Sin evaluar'
@@ -139,10 +158,10 @@ async function renderFicha() {
     <div class="ficha-header">
       <div class="ficha-header-top">
         <div class="ficha-avatar-big" style="overflow:hidden;padding:0">
-  ${v.foto_url 
-    ? `<img src="${v.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:14px">`
-    : initials(v.nombre)}
-</div>
+          ${v.foto_url
+            ? `<img src="${v.foto_url}" style="width:100%;height:100%;object-fit:cover;border-radius:14px">`
+            : initials(v.nombre)}
+        </div>
         <div class="ficha-info">
           <h2>${v.nombre}</h2>
           <p>${v.rol || ''} ${v.nivel_org ? '· ' + v.nivel_org : ''}</p>
@@ -179,6 +198,20 @@ async function renderFicha() {
       </div>
     </div>
 
+    ${historial.length >= 2 ? `
+    <div class="card">
+      <h3>📈 Evolución de ejes</h3>
+      <div style="display:flex;gap:16px;margin-bottom:8px">
+        <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b">
+          <span style="width:20px;height:3px;background:#3b82f6;display:inline-block;border-radius:2px"></span>Consultivo
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b">
+          <span style="width:20px;height:3px;background:#f59e0b;display:inline-block;border-radius:2px"></span>Técnico
+        </span>
+      </div>
+      <canvas id="evolucionChart" width="500" height="200" style="width:100%;max-width:500px"></canvas>
+    </div>` : ''}
+
     ${items.length > 0 ? `
     <div class="card">
       <h3>📊 Perfil Consultivo</h3>
@@ -211,9 +244,11 @@ async function renderFicha() {
       <h3>💬 Comentario del líder</h3>
       <p style="font-size:13px;color:#475569;line-height:1.6">${ev.comentario_lider}</p>
     </div>` : ''}
+
     <div style="height:20px"></div>`
 
   if (items.length > 0) setTimeout(() => drawArana(items), 100)
+  if (historial.length >= 2) setTimeout(() => drawEvolucion(historial), 150)
 }
 
 function drawArana(items) {
@@ -258,27 +293,18 @@ function drawArana(items) {
   }
 }
 
-async function init() {
-  const grid = document.getElementById('nineBoxGrid')
-  if (grid) grid.innerHTML = '<div class="loading">Cargando</div>'
-  await cargarDatos()
-  renderNineBox()
-}
 function drawEvolucion(historial) {
   const canvas = document.getElementById('evolucionChart')
   if (!canvas || historial.length < 2) return
   const ctx = canvas.getContext('2d')
   const w = canvas.width, h = canvas.height
-  const pad = { top: 20, right: 20, bottom: 40, left: 40 }
+  const pad = { top: 20, right: 20, bottom: 50, left: 40 }
   const chartW = w - pad.left - pad.right
   const chartH = h - pad.top - pad.bottom
-
   ctx.clearRect(0, 0, w, h)
-
   const n = historial.length
   const xStep = chartW / (n - 1)
 
-  // Grid lines
   for (let i = 0; i <= 4; i++) {
     const y = pad.top + (chartH / 4) * i
     ctx.beginPath()
@@ -293,30 +319,28 @@ function drawEvolucion(historial) {
     ctx.fillText(100 - i * 25, pad.left - 6, y + 3)
   }
 
-  // X labels
   historial.forEach((h, i) => {
     const x = pad.left + i * xStep
     ctx.fillStyle = '#94a3b8'
     ctx.font = '9px sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText(h.periodo_label || h.periodo, x, pad.top + chartH + 20)
+    ctx.fillText(h.periodo_label || h.periodo, x, pad.top + chartH + 16)
+    ctx.fillText(h.anio, x, pad.top + chartH + 28)
   })
 
   // Línea consultivo
   ctx.beginPath()
   historial.forEach((h, i) => {
     const x = pad.left + i * xStep
-    const y = pad.top + chartH - (h.puntaje_consultivo / 100) * chartH
+    const y = pad.top + chartH - ((h.puntaje_consultivo || 0) / 100) * chartH
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
   })
   ctx.strokeStyle = '#3b82f6'
   ctx.lineWidth = 2.5
   ctx.stroke()
-
-  // Puntos consultivo
   historial.forEach((h, i) => {
     const x = pad.left + i * xStep
-    const y = pad.top + chartH - (h.puntaje_consultivo / 100) * chartH
+    const y = pad.top + chartH - ((h.puntaje_consultivo || 0) / 100) * chartH
     ctx.beginPath()
     ctx.arc(x, y, 5, 0, Math.PI * 2)
     ctx.fillStyle = '#3b82f6'
@@ -327,42 +351,27 @@ function drawEvolucion(historial) {
   ctx.beginPath()
   historial.forEach((h, i) => {
     const x = pad.left + i * xStep
-    const y = pad.top + chartH - (h.nota_tecnica_raw / 100) * chartH
+    const y = pad.top + chartH - ((h.nota_tecnica_raw || 0) / 100) * chartH
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
   })
   ctx.strokeStyle = '#f59e0b'
   ctx.lineWidth = 2.5
   ctx.stroke()
-
-  // Puntos técnico
   historial.forEach((h, i) => {
     const x = pad.left + i * xStep
-    const y = pad.top + chartH - (h.nota_tecnica_raw / 100) * chartH
+    const y = pad.top + chartH - ((h.nota_tecnica_raw || 0) / 100) * chartH
     ctx.beginPath()
     ctx.arc(x, y, 5, 0, Math.PI * 2)
     ctx.fillStyle = '#f59e0b'
     ctx.fill()
   })
-
-  // Leyenda
-  ctx.fillStyle = '#3b82f6'
-  ctx.fillRect(pad.left, pad.top + chartH + 28, 12, 3)
-  ctx.fillStyle = '#64748b'
-  ctx.font = '10px sans-serif'
-  ctx.textAlign = 'left'
-  ctx.fillText('Consultivo', pad.left + 16, pad.top + chartH + 31)
-
-  ctx.fillStyle = '#f59e0b'
-  ctx.fillRect(pad.left + 90, pad.top + chartH + 28, 12, 3)
-  ctx.fillStyle = '#64748b'
-  ctx.fillText('Técnico', pad.left + 106, pad.top + chartH + 31)
 }
+
+async function init() {
+  const grid = document.getElementById('nineBoxGrid')
+  if (grid) grid.innerHTML = '<div class="loading">Cargando</div>'
+  await cargarDatos()
+  renderNineBox()
+}
+
 document.addEventListener('DOMContentLoaded', init)
-async function supabasePatch(path, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method: 'PATCH',
-    headers: { ...headers, 'Prefer': 'return=representation' },
-    body: JSON.stringify(body)
-  })
-  return res.json()
-}
